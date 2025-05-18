@@ -1,0 +1,49 @@
+import { Router, Request, Response } from 'express';
+import { User } from '../models/user.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+const router = Router();
+
+
+export const login = async (req: Request, res: Response): Promise<Response | void> => {
+  const { username, password } = req.body;
+
+  console.log('username:', username);
+  console.log('password input:', password);
+  
+  try {
+    // Check if the user exists
+    const user = await User.findOne({ where: { username } });
+
+    console.log('found user:', user?.username);
+    console.log('stored hash:', user?.password);
+
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid username or password' });
+    }
+
+    // Sign and return JWT token
+
+    const JWT_SECRET = process.env.JWT_SECRET as string;
+    console.log('Loaded JWT secret:', process.env.JWT_SECRET);
+    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+
+    return res.json({ token }); // ✅ added return
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ message: 'Server error during login' }); // ✅ added return
+  }
+};
+
+// POST /auth/login - Login a user
+router.post('/login', login);
+
+export default router;
