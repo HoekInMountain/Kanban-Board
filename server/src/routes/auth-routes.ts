@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, RequestHandler } from 'express';
 import { User } from '../models/user.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 const router = Router();
 
 
-const login = async (req: Request, res: Response): Promise<Response | void> => {
+const login: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
 
   console.log('username:', username);
@@ -21,13 +21,15 @@ const login = async (req: Request, res: Response): Promise<Response | void> => {
 
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid username or password' });
+      res.status(401).json({ message: 'Invalid username or password' });
+      return;
     }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid username or password' });
+      res.status(401).json({ message: 'Invalid username or password' });
+      return;
     }
 
     // Sign and return JWT token
@@ -36,10 +38,10 @@ const login = async (req: Request, res: Response): Promise<Response | void> => {
     console.log('Loaded JWT secret:', process.env.JWT_SECRET);
     const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
 
-    return res.json({ token }); // ✅ added return
+    res.json({ token });
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ message: 'Server error during login' }); // ✅ added return
+    res.status(500).json({ message: 'Server error during login' });
   }
 };
 
