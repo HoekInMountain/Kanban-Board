@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 const router = Router();
 
 
-export const login = async (req: Request, res: Response): Promise<Response | void> => {
+const login = async (req: Request, res: Response): Promise<Response | void> => {
   const { username, password } = req.body;
 
   console.log('username:', username);
